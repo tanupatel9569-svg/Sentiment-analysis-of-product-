@@ -1,0 +1,161 @@
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', sans-serif;
+    background: linear-gradient(to right, #f8f9fa, #e9ecef);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+.container {
+    background-color: #ffffff;
+    padding: 40px 30px;
+    border-radius: 12px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    width: 90%;
+    max-width: 500px;
+    text-align: center;
+    transition: transform 0.3s;
+}
+
+.container:hover {
+    transform: translateY(-3px);
+}
+
+h1 {
+    margin-bottom: 24px;
+    font-size: 26px;
+    color: #343a40;
+}
+
+textarea {
+    width: 100%;
+    height: 120px;
+    padding: 12px 16px;
+    font-size: 16px;
+    border-radius: 8px;
+    border: 1px solid #ced4da;
+    background-color: #fdfdfd;
+    color: #212529;
+    resize: none;
+    margin-bottom: 20px;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
+    transition: border 0.3s ease;
+}
+
+textarea:focus {
+    border-color: #6c63ff;
+    outline: none;
+}
+
+button {
+    padding: 12px 24px;
+    font-size: 16px;
+    border: none;
+    border-radius: 8px;
+    background: linear-gradient(to right, #6c63ff, #5a54e8);
+    color: white;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(108, 99, 255, 0.2);
+    transition: background 0.3s, transform 0.2s;
+}
+
+button:hover {
+    background: linear-gradient(to right, #5a54e8, #4a45d4);
+    transform: translateY(-2px);
+}
+
+#result {
+    margin-top: 20px;
+    font-size: 18px;
+    font-weight: bold;
+    color: #28a745;
+}
+ <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Sentiment Analyzer</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Product Review Sentiment Analyzer</h1>
+        <textarea id="review" placeholder="Type your product review..."></textarea>
+        <button onclick="analyzeSentiment()">Analyze Sentiment</button>
+        <p id="result"></p>
+    </div>
+    <script>
+        function analyzeSentiment() {
+            const review = document.getElementById("review").value;
+            fetch("/predict", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ review: review })
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById("result").innerText = "Sentiment: " + data.sentiment;
+            })
+            .catch(() => {
+                document.getElementById("result").innerText = "Error analyzing sentiment.";
+            });
+        }
+    </script>
+</body>
+</html>
+from flask import Flask, request, jsonify, render_template
+import joblib
+
+app = Flask(_name_)
+model = joblib.load('model.pkl')
+
+@app.route('/')
+def index():
+    return render_template('index.html')
+
+@app.route('/predict', methods=['POST'])
+def predict():
+    data = request.json
+    review = data['review']
+    prediction = model.predict([review])[0]
+    return jsonify({'sentiment': prediction})
+
+if _name_ == '_main_':
+    app.run(debug=True)
+ sklearn.pipeline import Pipeline
+from sklearn.naive_bayes import MultinomialNB
+from sklearn.feature_extraction.text import CountVectorizer
+import joblib
+
+texts = [
+    "I love this product", "Absolutely fantastic", "Exceeded my expectations", "Very good quality",
+    "Happy with the purchase", "Works great", "Amazing experience", "Highly recommend it",
+    "Horrible product", "Very disappointing", "Worst purchase ever", "Terrible service",
+    "Not worth the price", "Cheap material", "Will not buy again", "Total waste of money",
+    "This is awesome", "Superb", "Reliable and efficient", "Great value for money",
+    "Awful experience", "Do not buy this", "It broke immediately", "Extremely poor quality",
+    "Fast delivery", "Packaging was good", "Loved it", "Perfect", "Super fast service", "Really helpful",
+    "Not as described", "Misleading product", "Poor support", "Unresponsive seller"
+]
+
+labels = [
+    'positive', 'positive', 'positive', 'positive',
+    'positive', 'positive', 'positive', 'positive',
+    'negative', 'negative', 'negative', 'negative',
+    'negative', 'negative', 'negative', 'negative',
+    'positive', 'positive', 'positive', 'positive',
+    'negative', 'negative', 'negative', 'negative',
+    'positive', 'positive', 'positive', 'positive', 'positive', 'positive',
+    'negative', 'negative', 'negative', 'negative'
+]
+
+model = Pipeline([
+    ('vectorizer', CountVectorizer()),
+    ('classifier', MultinomialNB())
+])
+
+model.fit(texts, labels)
+joblib.dump(model, 'model.pkl')
